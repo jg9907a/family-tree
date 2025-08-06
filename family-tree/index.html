@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Smart Family Tree</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    
+    <link rel="stylesheet" href="css/style.css">
+
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌳 Interactive Smart Family Tree</h1>
+        </div>
+        
+        <div class="controls">
+            <div class="input-group">
+                <input type="text" id="csvUrl" placeholder="Enter Google Sheets CSV URL" 
+                       value="https://docs.google.com/spreadsheets/d/e/2PACX-1vS2m-t56vxMDrUQdvryQObO1eGHJS_sTqakTqnOcB2hDKxc05aWx-VhG4sOE48p7chFkUchWjjP-B8K/pub?output=csv">
+                <button id="loadDataBtn">📥 Load Data</button>
+                <button id="sampleDataBtn">📊 Use Sample Data</button>
+            </div>
+            
+            <div class="input-group">
+                <button id="zoomInBtn">🔍+ Zoom In</button>
+                <button id="zoomOutBtn">🔍- Zoom Out</button>
+                <button id="autoZoomBtn">📐 Auto Fit</button>
+                <button id="resetZoomBtn">↺ Reset View</button>
+            </div>
+            
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color single-gradient"></div>
+                    <span>Single Person</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color married-gradient"></div>
+                    <span>Married Person</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-line marriage-line"></div>
+                    <span>Marriage</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-line parent-child-line"></div>
+                    <span>Parent-Child</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tree-container" id="tree-container">
+            <svg id="family-tree" width="1340" height="600"></svg>
+        </div>
+        
+        <div id="details-panel" class="details-panel">
+            <h2>👤 Person Details</h2>
+            <div id="details-content"></div>
+        </div>
+        
+        <div class="instructions">
+            <h2>📖 Instructions & Navigation</h2>
+            <div class="instructions-grid">
+                <div>
+                    <h3>🖱️ Mouse Controls:</h3>
+                    <ul>
+                        <li>Click and drag on empty space to pan around</li>
+                        <li>Click on any person to view their details</li>
+                        <li>Use zoom buttons or scroll wheel with Ctrl/Cmd</li>
+                        <li>Double-click empty space to reset view</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>⌨️ Keyboard Shortcuts:</h3>
+                    <ul>
+                        <li><strong>Arrow Keys:</strong> Pan in any direction</li>
+                        <li><strong>+ / =:</strong> Zoom in</li>
+                        <li><strong>- :</strong> Zoom out</li>
+                        <li><strong>0:</strong> Reset to default view</li>
+                        <li><strong>F:</strong> Auto-fit entire tree</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="features-box">
+                <h3>✨ Features:</h3>
+                <ul>
+                    <li>Each spouse gets their own separate box with smooth curved connections</li>
+                    <li>Clean, modern design with gradient colors and smooth animations</li>
+                    <li>Automatic optimal spacing and alignment of generations</li>
+                    <li>Load your own data from Google Sheets (CSV format)</li>
+                    <li>Required columns: ID, Name, generation, SpouseID, Parent1ID, Parent2ID, BirthYear (optional)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="./js/app.js"></script>
+</body>
+</html>
