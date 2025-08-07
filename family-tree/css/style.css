@@ -281,3 +281,18 @@ body {
         min-height: 400px;
     }
 }
+
+#details-panel .close-btn {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 18px;
+    color: #666;
+    cursor: pointer;
+}
+
+#details-panel .close-btn:hover {
+    color: #000;
+}

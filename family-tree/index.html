@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interactive Smart Family Tree</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
-    
     <link rel="stylesheet" href="css/style.css">
-
 </head>
 <body>
     <div class="container">
@@ -37,7 +35,7 @@
                 </div>
                 <div class="legend-item">
                     <div class="legend-color married-gradient"></div>
-                    <span>Married Person</span>
+                    <span>Han</span>
                 </div>
                 <div class="legend-item">
                     <div class="legend-line marriage-line"></div>
@@ -56,6 +54,7 @@
         
         <div id="details-panel" class="details-panel">
             <h2>👤 Person Details</h2>
+            <button id="closeDetailsBtn" class="close-btn">✕</button>
             <div id="details-content"></div>
         </div>
         
@@ -95,6 +94,15 @@
         </div>
     </div>
 
-    <script type="module" src="./js/app.js"></script>
+    <!-- Load JavaScript modules -->
+    <script type="module">
+        import { FamilyTreeApp } from './js/app.js';
+        
+        // Initialize the application when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            const app = new FamilyTreeApp();
+            app.initialize();
+        });
+    </script>
 </body>
 </html>
