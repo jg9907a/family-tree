@@ -34,7 +34,9 @@ export const CONFIG = {
             start: '#F093FB',
             end: '#F5576C'
         },
-        marriageLine: '#FF6B6B',
+        marriageLine: '#FF6B6B',        // Solid red for current marriage
+        divorcedLine: '#FFB6B6',        // Pink for divorced (will be dashed)
+        widowedLine: '#999999',         // Gray for widowed
         parentChildLine: '#4ECDC4',
         selectedStroke: '#FFD700',
         defaultStroke: 'white'
@@ -68,16 +70,96 @@ export const CONFIG = {
     }
 };
 
-// Sample data for testing
+// CORRECT SAMPLE DATA - One person, multiple spouses
 export const SAMPLE_DATA = [
-    { ID: '1', Name: 'John Smith', generation: '1', SpouseID: '2', Parent1ID: '', Parent2ID: '', BirthYear: '1950' },
-    { ID: '2', Name: 'Mary Johnson', generation: '1', SpouseID: '1', Parent1ID: '', Parent2ID: '', BirthYear: '1952' },
-    { ID: '3', Name: 'Robert Smith', generation: '2', SpouseID: '4', Parent1ID: '1', Parent2ID: '2', BirthYear: '1975' },
-    { ID: '4', Name: 'Lisa Brown', generation: '2', SpouseID: '3', Parent1ID: '', Parent2ID: '', BirthYear: '1977' },
-    { ID: '5', Name: 'Jennifer Smith', generation: '2', SpouseID: '', Parent1ID: '1', Parent2ID: '2', BirthYear: '1978' },
-    { ID: '6', Name: 'Michael Smith', generation: '3', SpouseID: '', Parent1ID: '3', Parent2ID: '4', BirthYear: '2001' },
-    { ID: '7', Name: 'Sarah Smith', generation: '3', SpouseID: '', Parent1ID: '3', Parent2ID: '4', BirthYear: '2003' },
-    { ID: '8', Name: 'David Wilson', generation: '1', SpouseID: '9', Parent1ID: '', Parent2ID: '', BirthYear: '1948' },
-    { ID: '9', Name: 'Carol Davis', generation: '1', SpouseID: '8', Parent1ID: '', Parent2ID: '', BirthYear: '1950' },
-    { ID: '10', Name: 'Tom Wilson', generation: '2', SpouseID: '', Parent1ID: '8', Parent2ID: '9', BirthYear: '1972' }
+    // John Smith - has TWO spouses (divorced from Mary, married to Susan)
+    { 
+        ID: '1', 
+        Name: 'John Smith', 
+        generation: '1', 
+        SpouseID: '2,3',  // MULTIPLE SPOUSES: Mary and Susan
+        SpouseStatus: 'divorced,married',  // Status for each spouse
+        Parent1ID: '', 
+        Parent2ID: '', 
+        BirthYear: '1950'
+    },
+    // Mary - divorced from John
+    { 
+        ID: '2', 
+        Name: 'Mary Johnson', 
+        generation: '1', 
+        SpouseID: '1',  
+        SpouseStatus: 'divorced',
+        Parent1ID: '', 
+        Parent2ID: '', 
+        BirthYear: '1952'
+    },
+    // Susan - married to John
+    { 
+        ID: '3', 
+        Name: 'Susan Williams', 
+        generation: '1', 
+        SpouseID: '1',
+        SpouseStatus: 'married',
+        Parent1ID: '', 
+        Parent2ID: '', 
+        BirthYear: '1955'
+    },
+    
+    // Children from first marriage (John & Mary)
+    { 
+        ID: '4', 
+        Name: 'Robert Smith', 
+        generation: '2', 
+        SpouseID: '5',
+        SpouseStatus: 'married',
+        Parent1ID: '1', 
+        Parent2ID: '2', 
+        BirthYear: '1975'
+    },
+    { 
+        ID: '5', 
+        Name: 'Lisa Brown', 
+        generation: '2', 
+        SpouseID: '4',
+        SpouseStatus: 'married',
+        Parent1ID: '', 
+        Parent2ID: '', 
+        BirthYear: '1977'
+    },
+    
+    // Children from second marriage (John & Susan)
+    { 
+        ID: '6', 
+        Name: 'Emma Smith', 
+        generation: '2', 
+        SpouseID: '',
+        SpouseStatus: '',
+        Parent1ID: '1', 
+        Parent2ID: '3', 
+        BirthYear: '1990'
+    },
+    
+    // Widowed example
+    { 
+        ID: '7', 
+        Name: 'David Wilson', 
+        generation: '1', 
+        SpouseID: '8',
+        SpouseStatus: 'widowed',
+        Parent1ID: '', 
+        Parent2ID: '', 
+        BirthYear: '1948'
+    },
+    { 
+        ID: '8', 
+        Name: 'Carol Davis', 
+        generation: '1', 
+        SpouseID: '7',
+        SpouseStatus: 'deceased',
+        Parent1ID: '', 
+        Parent2ID: '', 
+        BirthYear: '1950',
+        DeathYear: '1990'
+    }
 ];

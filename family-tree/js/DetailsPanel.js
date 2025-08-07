@@ -6,44 +6,56 @@ export class DetailsPanel {
         this.content = contentElement;
         this.dataManager = dataManager;
     }
-    
-    /**
-     * Show details for a selected person
-     */
+
     showPerson(person) {
         let html = this.generatePersonHTML(person);
         this.content.innerHTML = html;
         this.panel.classList.add('active');
     }
-    
-    /**
-     * Hide the details panel
-     */
+
     hide() {
         this.panel.classList.remove('active');
     }
-    
-    /**
-     * Generate HTML for person details
-     */
+
+    clear() {
+        this.content.innerHTML = '';
+        this.hide();
+    }
+
     generatePersonHTML(person) {
         let html = '';
-        
-        // Basic information
+
+        // Basic Info
         html += this.createDetailItem('Name', person.Name);
         html += this.createDetailItem('Generation', person.generation);
-        
         if (person.BirthYear) {
             html += this.createDetailItem('Birth Year', person.BirthYear);
         }
-        
-        // Spouse information
-        if (person.hasSpouse) {
+
+        // Spouses
+        if (person.spouses && person.spouses.length > 0) {
+            html += '<div class="spouse-section">';
+            html += '<strong>Relationships:</strong>';
+            person.spouses.forEach((spouseInfo, index) => {
+                const spouse = this.dataManager.findPerson(spouseInfo.id);
+                if (spouse) {
+                    const statusClass = spouseInfo.status?.toLowerCase() || 'unknown';
+                    html += `
+                        <div class="spouse-item ${statusClass}">
+                            <strong>Spouse ${index + 1}:</strong> ${spouse.Name}
+                            <span class="marriage-status ${statusClass}">${spouseInfo.status}</span>
+                            ${spouseInfo.years ? `<br><small>Years: ${spouseInfo.years}</small>` : ''}
+                        </div>
+                    `;
+                }
+            });
+            html += '</div>';
+        } else if (person.hasSpouse && person.SpouseID) {
             const spouse = this.dataManager.getSpouse(person);
             html += this.createDetailItem('Spouse', spouse ? spouse.Name : 'Not found');
         }
-        
-        // Parents information
+
+        // Parents
         if (person.hasParents) {
             const parents = this.dataManager.getParents(person);
             if (parents.length > 0) {
@@ -51,23 +63,36 @@ export class DetailsPanel {
                 html += this.createDetailItem('Parents', '<br>' + parentsList);
             }
         }
-        
-        // Children information
+
+        // Children grouped by other parent
         const children = this.dataManager.getChildren(person.ID);
         if (children.length > 0) {
-            let childrenList = children.map(c => `&nbsp;&nbsp;• ${c.Name}`).join('<br>');
-            html += this.createDetailItem('Children', '<br>' + childrenList);
+            const childrenByParent = {};
+            children.forEach(child => {
+                const otherParentId = child.Parent1ID === person.ID ? child.Parent2ID : child.Parent1ID;
+                const otherParent = otherParentId ? this.dataManager.findPerson(otherParentId) : null;
+                const key = otherParent ? otherParent.Name : 'Unknown';
+                if (!childrenByParent[key]) childrenByParent[key] = [];
+                childrenByParent[key].push(child);
+            });
+
+            html += '<div class="detail-item"><strong>Children:</strong><br>';
+            Object.entries(childrenByParent).forEach(([parentName, kids]) => {
+                if (Object.keys(childrenByParent).length > 1) {
+                    html += `<small style="color: #666;">With ${parentName}:</small><br>`;
+                }
+                kids.forEach(child => {
+                    html += `&nbsp;&nbsp;• ${child.Name}<br>`;
+                });
+            });
+            html += '</div>';
         }
-        
-        // Additional information (can be extended)
+
+        // Extra stats
         html += this.generateAdditionalInfo(person);
-        
         return html;
     }
-    
-    /**
-     * Create a detail item HTML
-     */
+
     createDetailItem(label, value) {
         return `
             <div class="detail-item">
@@ -75,76 +100,54 @@ export class DetailsPanel {
             </div>
         `;
     }
-    
-    /**
-     * Generate additional information if available
-     */
+
     generateAdditionalInfo(person) {
         let html = '';
-        
-        // Calculate age if birth year is available
+
+        // Approximate age
         if (person.BirthYear) {
             const currentYear = new Date().getFullYear();
-            const birthYear = parseInt(person.BirthYear);
-            if (!isNaN(birthYear)) {
-                const age = currentYear - birthYear;
+            const age = currentYear - parseInt(person.BirthYear);
+            if (!isNaN(age)) {
                 html += this.createDetailItem('Approximate Age', `${age} years`);
             }
         }
-        
-        // Count descendants
+
+        // Descendants
         const descendants = this.countDescendants(person.ID);
         if (descendants > 0) {
             html += this.createDetailItem('Total Descendants', descendants);
         }
-        
-        // Count siblings
+
+        // Siblings
         const siblings = this.countSiblings(person);
         if (siblings > 0) {
             html += this.createDetailItem('Number of Siblings', siblings);
         }
-        
+
         return html;
     }
-    
-    /**
-     * Count all descendants of a person
-     */
+
     countDescendants(personId, counted = new Set()) {
         let count = 0;
         const children = this.dataManager.getChildren(personId);
-        
-        children.forEach(child => {
+        for (const child of children) {
             if (!counted.has(child.ID)) {
                 counted.add(child.ID);
                 count++;
                 count += this.countDescendants(child.ID, counted);
             }
-        });
-        
+        }
         return count;
     }
-    
-    /**
-     * Count siblings of a person
-     */
+
     countSiblings(person) {
         if (!person.hasParents) return 0;
-        
-        const allChildren = this.dataManager.getData().filter(p => 
-            p.Parent1ID === person.Parent1ID && 
-            p.Parent2ID === person.Parent2ID &&
-            p.ID !== person.ID
-        );
-        
-        return allChildren.length;
-    }
-    
-    /**
-     * Clear the panel content
-     */
-    clear() {
-        this.content.innerHTML = '';
-        this.hide();
+        const all = this.dataManager.getData();
+        return all.filter(p =>
+            p.ID !== person.ID &&
+            p.Parent1ID === person.Parent1ID &&
+            p.Parent2ID === person.Parent2ID
+        ).length;
     }
 }

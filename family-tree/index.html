@@ -28,6 +28,12 @@
                 <button id="resetZoomBtn">↺ Reset View</button>
             </div>
             
+            <div class="input-group">
+                <input type="text" id="searchInput" placeholder="🔍 Search by name or year...">
+                <button id="clearSearchBtn">✕ Clear</button>
+            </div>
+            <div id="searchResults" class="search-results"></div>
+            
             <div class="legend">
                 <div class="legend-item">
                     <div class="legend-color single-gradient"></div>
@@ -35,7 +41,7 @@
                 </div>
                 <div class="legend-item">
                     <div class="legend-color married-gradient"></div>
-                    <span>Han</span>
+                    <span>Married Person</span>
                 </div>
                 <div class="legend-item">
                     <div class="legend-line marriage-line"></div>
@@ -47,11 +53,14 @@
                 </div>
             </div>
         </div>
-        
-        <div class="tree-container" id="tree-container">
-            <svg id="family-tree" width="1340" height="600"></svg>
-        </div>
-        
+    </div>
+    
+    <!-- Tree container is outside the main container to be full-width -->
+    <div class="tree-container" id="tree-container">
+        <svg id="family-tree"></svg>
+    </div>
+    
+    <div class="container">
         <div id="details-panel" class="details-panel">
             <h2>👤 Person Details</h2>
             <button id="closeDetailsBtn" class="close-btn">✕</button>
@@ -59,37 +68,45 @@
         </div>
         
         <div class="instructions">
-            <h2>📖 Instructions & Navigation</h2>
-            <div class="instructions-grid">
-                <div>
-                    <h3>🖱️ Mouse Controls:</h3>
-                    <ul>
-                        <li>Click and drag on empty space to pan around</li>
-                        <li>Click on any person to view their details</li>
-                        <li>Use zoom buttons or scroll wheel with Ctrl/Cmd</li>
-                        <li>Double-click empty space to reset view</li>
-                    </ul>
-                </div>
-                <div>
-                    <h3>⌨️ Keyboard Shortcuts:</h3>
-                    <ul>
-                        <li><strong>Arrow Keys:</strong> Pan in any direction</li>
-                        <li><strong>+ / =:</strong> Zoom in</li>
-                        <li><strong>- :</strong> Zoom out</li>
-                        <li><strong>0:</strong> Reset to default view</li>
-                        <li><strong>F:</strong> Auto-fit entire tree</li>
-                    </ul>
-                </div>
+            <div class="instructions-header">
+                <h2>📖 Instructions & Navigation</h2>
+                <button id="toggleInstructionsBtn" class="toggle-btn">−</button>
             </div>
-            <div class="features-box">
-                <h3>✨ Features:</h3>
-                <ul>
-                    <li>Each spouse gets their own separate box with smooth curved connections</li>
-                    <li>Clean, modern design with gradient colors and smooth animations</li>
-                    <li>Automatic optimal spacing and alignment of generations</li>
-                    <li>Load your own data from Google Sheets (CSV format)</li>
-                    <li>Required columns: ID, Name, generation, SpouseID, Parent1ID, Parent2ID, BirthYear (optional)</li>
-                </ul>
+            <div id="instructionsContent" class="instructions-content">
+                <div class="instructions-grid">
+                    <div>
+                        <h3>🖱️ Mouse Controls:</h3>
+                        <ul>
+                            <li>Click and drag on empty space to pan around</li>
+                            <li>Click on any person to view their details</li>
+                            <li>Use zoom buttons or scroll wheel with Ctrl/Cmd</li>
+                            <li>Double-click empty space to reset view</li>
+                            <li>Use the search box to find specific people</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3>⌨️ Keyboard Shortcuts:</h3>
+                        <ul>
+                            <li><strong>Arrow Keys:</strong> Pan in any direction</li>
+                            <li><strong>+ / =:</strong> Zoom in</li>
+                            <li><strong>- :</strong> Zoom out</li>
+                            <li><strong>0:</strong> Reset to default view</li>
+                            <li><strong>F:</strong> Auto-fit entire tree</li>
+                            <li><strong>Escape:</strong> Clear search</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="features-box">
+                    <h3>✨ Features:</h3>
+                    <ul>
+                        <li>Search by name or birth year with instant highlighting</li>
+                        <li>Each spouse gets their own separate box with smooth curved connections</li>
+                        <li>Clean, modern design with gradient colors and smooth animations</li>
+                        <li>Automatic optimal spacing and alignment of generations</li>
+                        <li>Load your own data from Google Sheets (CSV format)</li>
+                        <li>Required columns: ID, Name, generation, SpouseID, Parent1ID, Parent2ID, BirthYear (optional)</li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>

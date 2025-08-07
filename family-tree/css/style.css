@@ -9,7 +9,7 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    background: #9ca4b0;
     min-height: 100vh;
     color: #333;
 }
@@ -35,11 +35,10 @@ body {
 
 /* Controls Panel */
 .controls {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
+    background: #ffffff;  /* Pure white, no transparency */
     padding: 20px;
     border-radius: 15px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);  /* Softer shadow */
     margin-bottom: 20px;
 }
 
@@ -133,19 +132,6 @@ body {
     background: #4ECDC4;
 }
 
-/* Tree Container */
-.tree-container {
-    background: rgba(255, 255, 255, 0.98);
-    border-radius: 20px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-    padding: 20px;
-    margin-bottom: 20px;
-    overflow: hidden;
-    position: relative;
-    cursor: grab;
-    min-height: 600px;
-}
-
 .tree-container:focus {
     outline: none;
 }
@@ -156,13 +142,14 @@ body {
 
 /* Details Panel */
 .details-panel {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
+    background: #ffffff;  /* Pure white */
     border-radius: 15px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);  /* Softer shadow */
     padding: 25px;
     margin-bottom: 20px;
     display: none;
+    position: relative;
+    width: 100%;
 }
 
 .details-panel.active {
@@ -190,9 +177,10 @@ body {
 .detail-item {
     margin-bottom: 12px;
     padding: 10px;
-    background: #f8f9fa;
+    background: #ffffff;  /* Pure white */
+    border: 1px solid #e0e0e0;  /* Subtle border */
     border-radius: 8px;
-    border-left: 3px solid #4a90e2;
+    border-left: 3px solid #4a90e2;  /* Keep the blue accent */
 }
 
 .detail-item strong {
@@ -203,10 +191,9 @@ body {
 
 /* Instructions Panel */
 .instructions {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
+    background: #ffffff;  /* Pure white */
     border-radius: 15px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);  /* Softer shadow */
     padding: 25px;
 }
 
@@ -250,8 +237,7 @@ body {
 .features-box {
     margin-top: 20px;
     padding: 15px;
-    background: #f8f9fa;
-    border-radius: 10px;
+    background: #ffffff;  /* Changed to pure white */
 }
 
 /* Node Styles */
@@ -295,4 +281,281 @@ body {
 
 #details-panel .close-btn:hover {
     color: #000;
+}
+
+/* ===== SEARCH FUNCTIONALITY STYLES ===== */
+
+/* Search Results Container */
+.search-results {
+    background: #ffffff;  /* Pure white */
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);  /* Very soft shadow */
+    padding: 10px;
+    margin-top: 10px;
+    display: none;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.search-results.active {
+    display: block;
+}
+
+/* Individual Search Result Items */
+.search-result-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-radius: 6px;
+    margin-bottom: 4px;
+    background: #ffffff;  /* Changed to white */
+    border: 1px solid #e0e0e0;  /* Add border for definition */
+    transition: all 0.2s ease;
+}
+
+.search-result-item:hover {
+    background: linear-gradient(135deg, #4a90e2 0%, #5ca0f2 100%);
+    color: white;
+    transform: translateX(5px);
+}
+
+/* Search Highlight Animation */
+.node rect.search-highlight {
+    animation: pulse 1.5s infinite;
+    filter: drop-shadow(0 0 10px #FFD700);
+}
+
+@keyframes pulse {
+    0%, 100% { 
+        stroke-opacity: 1;
+        stroke-width: 5;
+    }
+    50% { 
+        stroke-opacity: 0.6;
+        stroke-width: 7;
+    }
+}
+
+/* Clear Search Button */
+#clearSearchBtn {
+    padding: 12px 20px;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: none;
+}
+
+/* Remove backdrop filters and transparencies */
+.controls,
+.details-panel,
+.instructions,
+.search-results {
+    backdrop-filter: none;  /* Remove all backdrop filters */
+}
+
+#clearSearchBtn.active {
+    display: inline-block;
+}
+
+#clearSearchBtn:hover {
+    background: #c82333;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+}
+
+#clearSearchBtn:active {
+    transform: translateY(0);
+}
+
+/* ===== TREE CONTAINER RESPONSIVE OVERRIDE ===== */
+
+/* Override the tree container to be full width (this overrides the existing style) */
+.tree-container {
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 20px;
+    overflow: hidden;
+    position: relative;
+    cursor: grab;
+    min-height: 600px;
+    max-width: 1800px !important;
+    width: calc(100% - 40px) !important;
+    margin: 0 auto 20px auto !important;
+}
+
+/* Make SVG responsive within tree container */
+#family-tree {
+    width: 100%;
+    height: 100%;
+    min-height: 600px;
+}
+
+/* ===== ADD THESE STYLES TO YOUR CSS ===== */
+
+/* Instructions header with toggle button */
+.instructions-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.instructions-header h2 {
+    margin-bottom: 0;  /* Remove bottom margin since header handles spacing */
+}
+
+/* Toggle button styling */
+.toggle-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid #4a90e2;
+    background: white;
+    color: #4a90e2;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.toggle-btn:hover {
+    background: #4a90e2;
+    color: white;
+    transform: scale(1.1);
+}
+
+.toggle-btn:active {
+    transform: scale(0.95);
+}
+
+/* Instructions content wrapper */
+.instructions-content {
+    transition: all 0.3s ease;
+}
+
+/* When collapsed, instructions panel should be smaller */
+.instructions.collapsed {
+    padding: 15px 25px;  /* Less padding when collapsed */
+}
+
+/* Add a subtle indicator that it's collapsible */
+.instructions-header {
+    cursor: pointer;
+    user-select: none;
+}
+
+.instructions-header:hover .toggle-btn {
+    background: #f0f7ff;
+}
+
+/* ===== ADD TO YOUR CSS FOR MULTIPLE MARRIAGES SUPPORT ===== */
+
+/* Update Legend Section */
+.legend-line.divorced-line {
+    background: #FFB6B6;
+    border: 1px dashed #FFB6B6;
+    background: repeating-linear-gradient(
+        90deg,
+        #FFB6B6,
+        #FFB6B6 5px,
+        transparent 5px,
+        transparent 10px
+    );
+}
+
+.legend-line.widowed-line {
+    background: #999999;
+}
+
+/* Node with multiple marriages indicator */
+.multiple-marriages-badge {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: #ff9800;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* Marriage years label */
+.marriage-years {
+    font-size: 10px;
+    fill: #666;
+    background: white;
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+/* Different node gradients for relationship status */
+.legend-color.divorced-gradient {
+    background: linear-gradient(135deg, #FFB6B6, #FFA0A0);
+}
+
+.legend-color.widowed-gradient {
+    background: linear-gradient(135deg, #999999, #666666);
+}
+
+/* Enhanced Details Panel for Multiple Spouses */
+.spouse-section {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 2px solid #e0e0e0;
+}
+
+.spouse-item {
+    margin-bottom: 10px;
+    padding: 8px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border-left: 3px solid #FF6B6B;
+}
+
+.spouse-item.divorced {
+    border-left-color: #FFB6B6;
+    opacity: 0.8;
+}
+
+.spouse-item.widowed {
+    border-left-color: #999999;
+}
+
+.marriage-status {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 10px;
+}
+
+.marriage-status.married {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.marriage-status.divorced {
+    background: #fff3e0;
+    color: #ef6c00;
+}
+
+.marriage-status.widowed {
+    background: #f3e5f5;
+    color: #6a1b9a;
 }

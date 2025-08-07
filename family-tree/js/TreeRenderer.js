@@ -79,7 +79,7 @@ export class TreeRenderer {
             const parentY = parents[0].y + CONFIG.node.height;
             const midY = (parentY + childY) / 2;
 
-            // **FIX**: Calculate the midpoint between parents for the connection line
+            // Calculate the midpoint between parents for the connection line
             let parentMidX;
             if (parents.length === 2) {
                 const [p1, p2] = parents.sort((a,b) => a.x - b.x);
@@ -95,27 +95,55 @@ export class TreeRenderer {
                 .attr("fill", "none");
         });
 
-        // Spouse links
+        // SPOUSE LINKS - Handle multiple spouses
         const drawnPairs = new Set();
+        
         data.forEach(node => {
-            const spouse = this.dataManager.getSpouse(node);
-            if (!spouse || node.x === undefined || spouse.x === undefined) return;
+            if (node.x === undefined) return;
+            
+            // Check for multiple spouses (comma-separated)
+            if (node.SpouseID) {
+                const spouseIDs = node.SpouseID.split(',').map(s => s.trim());
+                const spouseStatuses = node.SpouseStatus ? node.SpouseStatus.split(',').map(s => s.trim()) : [];
+                
+                spouseIDs.forEach((spouseID, index) => {
+                    const spouse = this.dataManager.findPerson(spouseID);
+                    if (!spouse || spouse.x === undefined) return;
 
-            const key = [node.ID, spouse.ID].sort().join("-");
-            if (drawnPairs.has(key)) return;
-            drawnPairs.add(key);
+                    const key = [node.ID, spouseID].sort().join("-");
+                    if (drawnPairs.has(key)) return;
+                    drawnPairs.add(key);
 
-            const y = node.y + CONFIG.node.height / 2;
-            const x1 = node.x + CONFIG.node.width;
-            const x2 = spouse.x;
+                    const status = spouseStatuses[index] || 'married';
+                    const y = node.y + CONFIG.node.height / 2;
+                    const x1 = node.x + CONFIG.node.width;
+                    const x2 = spouse.x;
 
-            links.append("line")
-                .attr("x1", x1)
-                .attr("y1", y)
-                .attr("x2", x2)
-                .attr("y2", y)
-                .attr("stroke", CONFIG.colors.marriageLine)
-                .attr("stroke-width", 3);
+                    // Different styles based on marriage status
+                    let strokeColor = '#FF6B6B';  // Default red for married
+                    let strokeDash = "none";
+                    let strokeWidth = 3;
+                    
+                    if (status === 'divorced') {
+                        strokeColor = '#FFB6B6';  // Pink
+                        strokeDash = "5,5";  // Dashed line
+                    } else if (status === 'widowed' || status === 'deceased') {
+                        strokeColor = '#999999';  // Gray
+                    } else if (status === 'separated') {
+                        strokeColor = '#FFB6B6';  // Pink
+                        strokeDash = "2,2";  // Short dashes
+                    }
+
+                    links.append("line")
+                        .attr("x1", x1)
+                        .attr("y1", y)
+                        .attr("x2", x2)
+                        .attr("y2", y)
+                        .attr("stroke", strokeColor)
+                        .attr("stroke-width", strokeWidth)
+                        .attr("stroke-dasharray", strokeDash);
+                });
+            }
         });
     }
 
@@ -148,11 +176,20 @@ export class TreeRenderer {
             .attr("width", CONFIG.node.width)
             .attr("height", CONFIG.node.height)
             .attr("rx", CONFIG.node.borderRadius)
-            .attr("fill", d => d.hasSpouse ? "url(#marriedGradient)" : "url(#singleGradient)")
+            .attr("fill", d => {
+                // Check if person has any current marriage (not divorced)
+                if (d.SpouseID && d.SpouseStatus) {
+                    const statuses = d.SpouseStatus.split(',').map(s => s.trim());
+                    const hasCurrentMarriage = statuses.some(s => s === 'married');
+                    return hasCurrentMarriage ? "url(#marriedGradient)" : "url(#singleGradient)";
+                }
+                return d.SpouseID ? "url(#marriedGradient)" : "url(#singleGradient)";
+            })
             .attr("stroke", CONFIG.colors.defaultStroke)
             .attr("stroke-width", CONFIG.node.strokeWidth)
             .style("filter", "drop-shadow(0 4px 8px rgba(0,0,0,0.15))");
 
+        // Name text
         const nameText = nodeGroups.append("text")
             .attr("x", CONFIG.node.width / 2)
             .attr("y", CONFIG.node.height / 2 + CONFIG.text.nameOffset)
@@ -174,7 +211,6 @@ export class TreeRenderer {
             }
         });
 
-
         // Birth year
         nodeGroups.append("text")
             .attr("x", CONFIG.node.width / 2)
@@ -185,5 +221,127 @@ export class TreeRenderer {
             .attr("opacity", 0.9)
             .style("pointer-events", "none")
             .text(d => d.BirthYear ? `b. ${d.BirthYear}` : "");
+
+        // Add indicator for multiple marriages
+        nodeGroups.each(function(d) {
+            if (d.SpouseID && d.SpouseID.includes(',')) {
+                const spouseCount = d.SpouseID.split(',').length;
+                const g = d3.select(this);
+                
+                // Add a small badge
+                g.append("circle")
+                    .attr("cx", CONFIG.node.width - 12)
+                    .attr("cy", 12)
+                    .attr("r", 10)
+                    .attr("fill", "#ff9800")
+                    .attr("stroke", "white")
+                    .attr("stroke-width", 2);
+                
+                g.append("text")
+                    .attr("x", CONFIG.node.width - 12)
+                    .attr("y", 16)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "white")
+                    .attr("font-size", "11px")
+                    .attr("font-weight", "bold")
+                    .style("pointer-events", "none")
+                    .text(spouseCount);
+            }
+        });
+    }
+
+    // Search and highlight functionality
+    searchAndHighlight(searchTerm) {
+        // Clear previous highlights
+        this.clearHighlights();
+        
+        if (!searchTerm || searchTerm.trim() === '') {
+            return [];
+        }
+        
+        const term = searchTerm.toLowerCase().trim();
+        const matches = [];
+        
+        // Search through all nodes
+        this.mainGroup.selectAll('.node').each(function(d) {
+            const nameMatch = d.Name.toLowerCase().includes(term);
+            const yearMatch = d.BirthYear && d.BirthYear.toString().includes(term);
+            
+            if (nameMatch || yearMatch) {
+                matches.push(d);
+                
+                // Highlight matching node
+                d3.select(this).select('rect')
+                    .classed('search-highlight', true)
+                    .attr('stroke', '#FFD700')
+                    .attr('stroke-width', 5);
+            }
+        });
+        
+        return matches;
+    }
+    
+    // Clear all search highlights
+    clearHighlights() {
+        this.mainGroup.selectAll('.node rect')
+            .classed('search-highlight', false)
+            .attr('stroke', CONFIG.colors.defaultStroke)
+            .attr('stroke-width', CONFIG.node.strokeWidth);
+            
+        // Restore selected node highlight if there was one
+        if (this.selectedNode) {
+            const self = this;
+            this.mainGroup.selectAll('.node').each(function(d) {
+                if (d.ID === self.selectedNode.ID) {
+                    d3.select(this).select('rect')
+                        .attr('stroke', CONFIG.colors.selectedStroke)
+                        .attr('stroke-width', CONFIG.node.selectedStrokeWidth);
+                }
+            });
+        }
+    }
+    
+    // Focus the view on a specific node
+    focusOnNode(node) {
+        if (!node || node.x === undefined || node.y === undefined) return;
+        
+        const svg = this.svg;
+        const container = document.getElementById('tree-container');
+        const bounds = container.getBoundingClientRect();
+        
+        // Calculate center position
+        const centerX = bounds.width / 2;
+        const centerY = bounds.height / 2;
+        
+        // Calculate translation to center the node
+        const nodeX = node.x + CONFIG.node.width / 2;
+        const nodeY = node.y + CONFIG.node.height / 2;
+        
+        // Set a reasonable zoom level (1.5x)
+        const scale = 1.5;
+        
+        // Create the transform
+        const transform = d3.zoomIdentity
+            .translate(centerX, centerY)
+            .scale(scale)
+            .translate(-nodeX, -nodeY);
+        
+        // Apply the transform with animation
+        svg.transition()
+            .duration(750)
+            .call(d3.zoom().transform, transform);
+    }
+    
+    // Handle window resize
+    handleResize() {
+        const container = document.getElementById('tree-container');
+        if (!container) return;
+        
+        const bounds = container.getBoundingClientRect();
+        
+        // Update SVG dimensions
+        this.svg
+            .attr("width", bounds.width - 40)  // Account for padding
+            .attr("height", Math.max(600, bounds.height - 40));
     }
 }

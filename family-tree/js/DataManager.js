@@ -1,4 +1,4 @@
-// js/DataManager.js
+// js/DataManager.js - FIXED for multiple spouses
 
 import { SAMPLE_DATA, CONFIG } from './config.js';
 
@@ -55,7 +55,16 @@ export class DataManager {
     }
 
     getSpouse(person) {
-        return person?.hasSpouse ? this.findPerson(person.SpouseID) : null;
+        if (!person?.SpouseID) return null;
+        // For multiple spouses, return the first one (for backward compatibility)
+        const spouseIds = person.SpouseID.split(',').map(s => s.trim());
+        return this.findPerson(spouseIds[0]);
+    }
+    
+    getAllSpouses(person) {
+        if (!person?.SpouseID) return [];
+        const spouseIds = person.SpouseID.split(',').map(s => s.trim());
+        return spouseIds.map(id => this.findPerson(id)).filter(Boolean);
     }
 
     getParents(person) {
@@ -80,88 +89,150 @@ export class DataManager {
         const idMap = new Map();
         data.forEach(d => idMap.set(d.ID, d));
 
-        const childrenMap = new Map();
-        data.forEach(person => {
-            if (person.Parent1ID) {
-                if (!childrenMap.has(person.Parent1ID)) childrenMap.set(person.Parent1ID, []);
-                childrenMap.get(person.Parent1ID).push(person.ID);
-            }
-            if (person.Parent2ID) {
-                if (!childrenMap.has(person.Parent2ID)) childrenMap.set(person.Parent2ID, []);
-                childrenMap.get(person.Parent2ID).push(person.ID);
-            }
-        });
-
         const positioned = new Set();
-        let cursorX = 0;
+        const rightmostAtDepth = new Map();
 
-        const assign = (id, depth = 0) => {
-            if (positioned.has(id)) return;
-
-            const person = idMap.get(id);
-            const spouse = person.hasSpouse ? idMap.get(person.SpouseID) : null;
-
-            const children = this.getChildren(id).filter(c => !positioned.has(c.ID));
-            let childWidths = [];
-
-            if (children.length > 0) {
-                children.forEach(child => {
-                    assign(child.ID, depth + 1);
-                    childWidths.push(child.x);
-                });
-
-                const minX = Math.min(...childWidths);
-                const maxX = Math.max(...childWidths);
-                const center = (minX + maxX) / 2;
-
-                person.x = center - (spouse ? (nodeWidth + coupleSpacing) / 2 : nodeWidth / 2);
-                if (spouse) spouse.x = person.x + nodeWidth + coupleSpacing;
-            } else {
-                person.x = cursorX;
-                if (spouse) {
-                    spouse.x = cursorX + nodeWidth + coupleSpacing;
-                    cursorX += nodeWidth * 2 + coupleSpacing + hSpacing;
-                } else {
-                    cursorX += nodeWidth + hSpacing;
-                }
-            }
-
+        // Helper to position a person at specific coordinates
+        const positionPerson = (person, x, depth) => {
+            if (positioned.has(person.ID)) return;
+            person.x = x;
             person.y = depth * vSpacing;
-            if (spouse) spouse.y = person.y;
-
             positioned.add(person.ID);
-            if (spouse) positioned.add(spouse.ID);
+            
+            // Update rightmost tracker
+            const rightEdge = x + nodeWidth;
+            const currentRightmost = rightmostAtDepth.get(depth) || -Infinity;
+            rightmostAtDepth.set(depth, Math.max(currentRightmost, rightEdge));
         };
 
-        // Start from all people with no parents
-        const roots = data.filter(p => !p.Parent1ID && !p.Parent2ID);
-        roots.forEach(p => assign(p.ID, 0));
-
-        // Final centering (optional)
-        const allX = data.map(d => d.x).filter(x => x !== undefined);
-        const minX = d3.min(allX);
-        const maxX = d3.max(allX);
-        const totalWidth = maxX - minX + nodeWidth;
-        const offset = (svgWidth - totalWidth) / 2 - minX;
-
-        data.forEach(d => {
-            if (d.x !== undefined) d.x += offset;
-            d.y = d.generation * vSpacing;
+        // Process each generation level
+        const generationGroups = new Map();
+        data.forEach(person => {
+            const gen = person.generation - 1; // Convert to 0-based
+            if (!generationGroups.has(gen)) {
+                generationGroups.set(gen, []);
+            }
+            generationGroups.get(gen).push(person);
         });
+
+        // Sort generations
+        const sortedGenerations = Array.from(generationGroups.keys()).sort((a, b) => a - b);
+
+        // Position from top generation down
+        sortedGenerations.forEach(depth => {
+            const people = generationGroups.get(depth);
+            
+            people.forEach(person => {
+                if (positioned.has(person.ID)) return;
+
+                // Get all spouses
+                const spouses = this.getAllSpouses(person);
+                
+                // Check if any spouse is already positioned
+                const positionedSpouse = spouses.find(s => positioned.has(s.ID));
+                
+                if (positionedSpouse) {
+                    // Position next to already-positioned spouse
+                    const baseX = positionedSpouse.x;
+                    
+                    // Find where to place this person relative to the spouse
+                    // Check if we should be to the left or right
+                    const spouseIds = positionedSpouse.SpouseID ? positionedSpouse.SpouseID.split(',').map(s => s.trim()) : [];
+                    const indexInSpouse = spouseIds.indexOf(person.ID);
+                    
+                    if (indexInSpouse > 0) {
+                        // This person is a later spouse, position to the right
+                        let offset = nodeWidth + coupleSpacing;
+                        for (let i = 1; i <= indexInSpouse; i++) {
+                            const prevSpouseId = spouseIds[i - 1];
+                            if (positioned.has(prevSpouseId)) {
+                                const prevSpouse = idMap.get(prevSpouseId);
+                                offset = Math.max(offset, (prevSpouse.x - baseX) + nodeWidth + coupleSpacing);
+                            }
+                        }
+                        positionPerson(person, baseX + offset, depth);
+                    } else {
+                        // Position to the left
+                        positionPerson(person, baseX - nodeWidth - coupleSpacing, depth);
+                    }
+                } else {
+                    // No spouse positioned yet
+                    const children = this.getChildren(person.ID);
+                    
+                    if (children.length > 0 && children.some(c => positioned.has(c.ID))) {
+                        // Position based on children
+                        const positionedChildren = children.filter(c => positioned.has(c.ID));
+                        const childXPositions = positionedChildren.map(c => c.x);
+                        const minChildX = Math.min(...childXPositions);
+                        const maxChildX = Math.max(...childXPositions);
+                        const centerX = (minChildX + maxChildX) / 2;
+                        
+                        // Account for multiple spouses when centering
+                        const totalSpouses = spouses.filter(s => !positioned.has(s.ID)).length;
+                        const totalWidth = nodeWidth + (totalSpouses * (nodeWidth + coupleSpacing));
+                        const idealX = centerX - totalWidth / 2;
+                        
+                        // Ensure minimum spacing from others at this depth
+                        const rightmost = rightmostAtDepth.get(depth) || -Infinity;
+                        const minX = rightmost > -Infinity ? rightmost + hSpacing : idealX;
+                        
+                        positionPerson(person, Math.max(idealX, minX), depth);
+                        
+                        // Position unpositioned spouses
+                        let spouseX = person.x + nodeWidth + coupleSpacing;
+                        spouses.forEach(spouse => {
+                            if (!positioned.has(spouse.ID)) {
+                                positionPerson(spouse, spouseX, depth);
+                                spouseX += nodeWidth + coupleSpacing;
+                            }
+                        });
+                    } else {
+                        // No children or children not positioned yet
+                        const rightmost = rightmostAtDepth.get(depth) || 0;
+                        const startX = rightmost > 0 ? rightmost + hSpacing : 0;
+                        
+                        positionPerson(person, startX, depth);
+                        
+                        // Position spouses to the right
+                        let spouseX = startX + nodeWidth + coupleSpacing;
+                        spouses.forEach(spouse => {
+                            if (!positioned.has(spouse.ID)) {
+                                positionPerson(spouse, spouseX, depth);
+                                spouseX += nodeWidth + coupleSpacing;
+                            }
+                        });
+                    }
+                }
+            });
+        });
+
+        // Center the entire tree
+        const allX = data.map(d => d.x).filter(x => x !== undefined);
+        if (allX.length > 0) {
+            const minX = Math.min(...allX);
+            const maxX = Math.max(...allX);
+            const totalWidth = maxX - minX + nodeWidth;
+            const offset = (svgWidth - totalWidth) / 2 - minX;
+
+            data.forEach(d => {
+                if (d.x !== undefined) d.x += offset;
+            });
+        }
 
         return data;
     }
-
 
     shiftBranch(node, shift) {
         if (node.x !== undefined) {
             node.x += shift;
         }
 
-        const spouse = this.getSpouse(node);
-        if (spouse && spouse.x !== undefined) {
-            spouse.x += shift;
-        }
+        const spouses = this.getAllSpouses(node);
+        spouses.forEach(spouse => {
+            if (spouse && spouse.x !== undefined) {
+                spouse.x += shift;
+            }
+        });
 
         this.getChildren(node.ID).forEach(child => this.shiftBranch(child, shift));
     }
